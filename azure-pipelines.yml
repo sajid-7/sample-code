@@ -1,0 +1,43 @@
+trigger:
+- main
+
+pool: default
+
+steps:
+- task: NodeTool@0
+  inputs:
+    versionSpec: '18.x' # Specify the version of Node.js you need
+  displayName: 'Install Node.js'
+
+- script: |
+    npm install
+  displayName: 'Install dependencies'
+
+# Uncomment the following step if your project has a build script
+# - script: |
+#     npm run build
+#   displayName: 'Build'
+
+- task: ArchiveFiles@2
+  inputs:
+    rootFolderOrFile: '$(System.DefaultWorkingDirectory)'
+    includeRootFolder: false
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/drop.zip'
+    replaceExistingArchive: true
+  displayName: 'Archive files'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/drop.zip'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
+  displayName: 'Publish Artifact'
+
+- task: AzureWebApp@1
+  inputs:
+    azureSubscription: 'Visual Studio Enterprise Subscription – MPN'
+    appType: 'webAppLinux'
+    appName: 'petula'
+    package: '$(Build.ArtifactStagingDirectory)/drop.zip'
+  displayName: 'Deploy to Azure Web App'
